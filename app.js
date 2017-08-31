@@ -12,6 +12,7 @@ var session = require('./routes/session');
 var org = require('./routes/org');
 var fcm = require('./routes/fcm');
 var feedback = require('./routes/feedback');
+var user_party = require('./routes/user_party');
 
 var app = express();
 
@@ -39,6 +40,7 @@ app.use('/session', session);
 app.use('/org', org);
 app.use('/fcm', fcm);
 app.use('/feedback', feedback);
+app.use('/user_party', user_party);
 
 // setup parameters
 app.set('jwt-secret', 'F2IbVOap7IjE6UqBod78');

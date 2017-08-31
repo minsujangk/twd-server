@@ -24,7 +24,7 @@ router.get('/create', function (req, res, next) {
             var guest_list = [];
             var create_time = moment(Date.now()).format('YYYY-MM-DD HH:mm:ss');
             pool.getConnection(function (err, connection) {
-                var query = connection.query('insert into org (owner_key, name, host_list, guest_list, create_time) values (' +
+                var query = connection.query('insert into org (owner_key, name, driver_list, user_list, create_time) values (' +
                     "'" + owner_key + "'," +
                     "'" + name + "'," +
                     "'" + host_list.toString() + "'," +
@@ -54,22 +54,38 @@ router.get('/create', function (req, res, next) {
 
 router.get('/search/:filterBy', function (req, res, next) {
     token.readToken(req)
-        .then(function (token) {
+        .then(function (decoded) {
+            var pkey = decoded.pkey
             var filterBy = req.params.filterBy;
             if (filterBy == 'orgkey' || filterBy == 'owner_key' || filterBy == 'name') {
                 var value = req.query.value;
                 pool.getConnection(function (err, connection) {
-                    var query = connection.query('select orgkey, owner_key, name from org where ' + filterBy + ' = ?', [value],
-                        function (err, rows) {
+                    var query = connection.query('select orgkey, owner_key, name, driver_list, user_list from org where ' + filterBy + ' = ?', [value],
+                        function (err, result, fields) {
+                            if (result.length == 0) {
+                                res.json({
+                                    message: 'failure',
+                                    type: 'ORG_NOTEXISTS'
+                                });
+                                connection.release();
+                                return;
+                            }
                             if (err) {
                                 connection.release();
                                 throw err;
                             }
-                            console.log(rows);
+                            console.log(result);
+                            for (var i = 0; i< result.length; i++) {
+                                var row = result[i];
+                                if (row.owner_key != pkey) {
+                                    delete row.user_list;
+                                    delete row.driver_list;
+                                }
+                            }
                             res.json({
                                 message: 'success',
-                                result: rows
-                            });
+                                result: result
+                            })
                             connection.release();
                         });
                     console.log(query);

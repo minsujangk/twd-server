@@ -221,8 +221,13 @@ router.get('/get-info/self', function (req, res, next) {
     .then(function (data) {
       var pkey = data.pkey;
       var type = data.type;
+      var query_text;
+      if (type == 'user')
+        query_text = 'select pkey, id, name, phone, picture from user where pkey=?'
+      else if (type == 'driver')
+        query_text = 'select pkey, name, phone, picture from driver where pkey=?'
       pool.getConnection(function (err, connection) {
-        var query = connection.query('select id, name, phone, picture from ?? where pkey=?', [type, pkey],
+        var query = connection.query(query_text, [pkey],
           function (error, result, fields) {
             if (error) throw error;
             if (result.length == 0) {
@@ -241,13 +246,23 @@ router.get('/get-info/self', function (req, res, next) {
               connection.release();
               return;
             }
-            res.json({
-              message: 'success',
-              id: result[0].id,
-              name: result[0].name,
-              phone: result[0].phone,
-              picture: result[0].picture
-            });
+            if (type == 'user')
+              res.json({
+                message: 'success',
+                pkey: result[0].pkey,
+                id: result[0].id,
+                name: result[0].name,
+                phone: result[0].phone,
+                picture: result[0].picture
+              });
+            if (type == 'driver')
+              res.json({
+                message: 'success',
+                pkey: result[0].pkey,
+                name: result[0].name,
+                phone: result[0].phone,
+                picture: result[0].picture
+              });
             connection.release();
           });
         console.log(query);
