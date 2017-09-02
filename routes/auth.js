@@ -275,7 +275,45 @@ router.get('/get-info/self', function (req, res, next) {
     });
 });
 
+router.get('/search/phone', function (req, res, next) {
+  token.readToken(req)
+    .then(function (decoded) {
+      var pkey = decoded.pkey
+      var value = req.query.value;
+      var query_text = 'select pkey, name, phone, picture from user where phone = ?'
+      pool.getConnection(function (err, connection) {
+        var query = connection.query(query_text, [value],
+          function (err, result, fields) {
+            if (result.length == 0) {
+              res.json({
+                message: 'failure',
+                type: 'USER_NOT_EXIST'
+              });
+              connection.release();
+              return;
+            }
+            if (err) {
+              connection.release();
+              throw err;
+              return;
+            }
+            console.log(result);
+            res.json({
+              message: 'success',
+              result: result[0]
+            })
+            connection.release();
+          });
+        console.log(query);
+      });
 
+    }, function () {
+      res.json({
+        message: 'failure',
+        type: 'TOKEN_INVALID'
+      });
+    });
+});
 
 
 function quote(text) {
