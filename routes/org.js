@@ -75,7 +75,7 @@ router.get('/search/:filterBy', function (req, res, next) {
                                 throw err;
                             }
                             console.log(result);
-                            for (var i = 0; i< result.length; i++) {
+                            for (var i = 0; i < result.length; i++) {
                                 var row = result[i];
                                 if (row.owner_key != pkey) {
                                     delete row.user_list;
@@ -98,6 +98,43 @@ router.get('/search/:filterBy', function (req, res, next) {
             });
         });
 });
+
+router.get('/get/:type', function (req, res, next) {
+    token.readToken(req)
+        .then(function (decoded) {
+            var pkey = decoded.pkey;
+            var type = req.params.type;
+            if (type == 'driver' || type == 'user') {
+                var query_text = 'select * from org'
+                pool.getConnection(function (err, connection) {
+                    var query = connection.query(query_text,
+                        function (err, result, fields) {
+                            var data = [];
+                            if (err) {
+                                connection.release();
+                                throw err;
+                            }
+                            for (var i = 0, row; row = result[i]; i++) {
+                                var guest_list = row[type + '_list'].split(',').map(function (item) {
+                                    return parseInt(item, 10)
+                                });
+                                if (guest_list.indexOf(pkey) != -1) {
+                                    delete row.driver_list;
+                                    delete row.user_list;
+                                    data.push(row);
+                                }
+                            }
+
+                            res.json({
+                                message: 'success',
+                                result: data
+                            })
+                        })
+
+                })
+            }
+        })
+})
 
 router.get('/add/:type', function (req, res, next) {
     token.readToken(req)
