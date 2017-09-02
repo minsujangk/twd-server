@@ -20,7 +20,6 @@ var pool = mysql.createPool({
 var UserParty = class UserParty {
     constructor(pkey) {
         this.pkey = pkey;
-        this.org_list = [];
         this.session_list = [];
     }
 
@@ -52,12 +51,6 @@ var UserParty = class UserParty {
 
                         var data = result[0];
 
-                        // load properties
-                        if (data.hasOwnProperty('org_list') && data.org_list != null && data.org_list != '') {
-                            self.org_list = data.org_list.split(",").map(function (item) {
-                                return parseInt(item, 10)
-                            });
-                        }
                         if (data.hasOwnProperty('session_list') && data.session_list != null && data.session_list != '') {
                             self.session_list = data.session_list.split(",").map(function (item) {
                                 return parseInt(item, 10)
@@ -75,11 +68,10 @@ var UserParty = class UserParty {
     commit() {
         console.log('userparty coommit')
         var self = this;
-        var query_text = 'update user_party set org_list = ?, session_list = ? where pkey = ?'
+        var query_text = 'update user_party set session_list = ? where pkey = ?'
         return new promise(function (resolve, reject) {
             pool.getConnection(function (err, connection) {
-                console.log(self.org_list)
-                var query = connection.query(query_text, [self.org_list.toString(), self.session_list.toString(), self.pkey],
+                var query = connection.query(query_text, [self.session_list.toString(), self.pkey],
                     function (err, result, fields) {
                         if (err) {
                             connection.release();
@@ -93,7 +85,7 @@ var UserParty = class UserParty {
         })
     }
 
-    // attr: org or session
+    // attr: session
     add(attr, array) {
         var self = this;
         return new promise(function (resolve, reject) {
@@ -111,7 +103,7 @@ var UserParty = class UserParty {
         });
     }
 
-    // attr: org or session
+    // attr: session
     remove(attr, array) {
         var self = this;
         return new promise(function (resolve, reject) {
@@ -153,7 +145,6 @@ router.get('/get', function (req, res, next) {
                 message: 'success',
                 result: {
                     pkey: up.pkey,
-                    org_list: up.org_list.toString(),
                     session_list: up.session_list.toString()
                 }
             })
